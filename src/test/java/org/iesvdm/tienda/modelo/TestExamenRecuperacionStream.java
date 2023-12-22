@@ -91,6 +91,11 @@ public class TestExamenRecuperacionStream {
             List<Pedido> list = pedidoHome.findAll();
 
             //TODO STREAMS
+            List<String> estados = list.stream()
+                            .map(pedido -> pedido.getEstado())
+                                    .distinct()
+                                            .collect(toList());
+            estados.forEach(System.out::println);
 
 
             pedidoHome.commitTransaction();
@@ -114,15 +119,27 @@ public class TestExamenRecuperacionStream {
             clienteHome.beginTransaction();
 
             List<Cliente> list = clienteHome.findAll();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date ultimoDia2007 = sdf.parse("2017-12-31");
+            Date primerDia2009 = sdf.parse("2009-01-01");
 
             //TODO STREAMS
-
+            List<Pedido> listaDePedidos = (List<Pedido>) list.stream()
+                    .flatMap(cliente -> cliente.getPedidos().stream())
+                    .collect(toList());
+            List<String> listaDeID = (List<String>) listaDePedidos.stream()
+                            .filter(pedido -> pedido.getFechaPedido().after(ultimoDia2007) && pedido.getFechaPedido().before(primerDia2009))
+                                    .map(pedido -> "ID" + pedido.getCliente().getCodigoCliente())
+                                            .distinct().collect(toList());
+            listaDeID.forEach(System.out::println);
 
             clienteHome.commitTransaction();
         } catch (RuntimeException e) {
             e.printStackTrace();
             clienteHome.rollbackTransaction();
             throw e; // or display error message
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -144,7 +161,11 @@ public class TestExamenRecuperacionStream {
             List<Pedido> list = pedidoHome.findAll();
 
             //TODO STREAMS
-
+            List<String> fechaPedidosTardios = list.stream()
+                            .filter(pedido -> (pedido.getFechaEntrega() != null) && pedido.getFechaEntrega().after(pedido.getFechaEsperada()))
+                                    .map(pedido -> "Codigo: " + pedido.getCodigoPedido() + " ID cliente: " + pedido.getCliente().getCodigoCliente() + " Fecha esperada: " + pedido.getFechaEsperada() + " Fecha de entrega: " + pedido.getFechaEntrega())
+                                            .collect(toList());
+            fechaPedidosTardios.forEach(System.out::println);
 
             pedidoHome.commitTransaction();
         } catch (RuntimeException e) {
@@ -205,8 +226,16 @@ public class TestExamenRecuperacionStream {
             pagoHome.beginTransaction();
 
             List<Pago> list = pagoHome.findAll();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date ultimoDia2007 = sdf.parse("2017-12-31");
+            Date primerDia2009 = sdf.parse("2009-01-01");
 
             //TODO STREAMS
+            List<String> pagos = list.stream()
+                            .filter(pago -> (pago.getFechaPago().after(ultimoDia2007) && pago.getFechaPago().before(primerDia2009)) && pago.getFormaPago().equalsIgnoreCase("paypal"))
+                                    .map(pago -> "Id pago: " + pago.getId() + " Fecha: " + pago.getFechaPago() + " Metodo de pago: " + pago.getFormaPago() )
+                                            .collect(toList());
+            pagos.forEach(System.out::println);
 
 
             pagoHome.commitTransaction();
@@ -214,6 +243,8 @@ public class TestExamenRecuperacionStream {
             e.printStackTrace();
             pagoHome.rollbackTransaction();
             throw e; // or display error message
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -230,6 +261,11 @@ public class TestExamenRecuperacionStream {
             List<Cliente> list = clienteHome.findAll();
 
             //TODO STREAMS
+            List<String> regiones = list.stream()
+                            .filter(cliente -> !cliente.getPagos().isEmpty())
+                                    .map(cliente -> cliente.getRegion()).distinct().collect(toList());
+
+            regiones.forEach(System.out::println);
 
             clienteHome.commitTransaction();
         } catch (RuntimeException e) {
@@ -254,6 +290,11 @@ public class TestExamenRecuperacionStream {
 
             //TODO STREAMS
 
+            long numeroMadrid = list.stream()
+                            .filter(cliente -> cliente.getCiudad().equalsIgnoreCase("madrid"))
+                                    .count();
+            System.out.println(numeroMadrid);
+
 
             clienteHome.commitTransaction();
         } catch (RuntimeException e) {
@@ -276,6 +317,12 @@ public class TestExamenRecuperacionStream {
             List<Cliente> list = clienteHome.findAll();
 
             //TODO STREAMS
+            List<String> clienteMayorLimite = list.stream()
+                            .sorted(Comparator.comparing((Cliente cliente) -> cliente.getLimiteCredito()).reversed())
+                                    .limit(1)
+                                            .map(cliente -> cliente.getNombreCliente())
+                                                    .collect(toList());
+            clienteMayorLimite.forEach(System.out::println);
 
 
             clienteHome.commitTransaction();
@@ -289,6 +336,7 @@ public class TestExamenRecuperacionStream {
     /**
      *  9. Devuelve un listado con el número de clientes que tiene cada país.
      */
+    @Test
     void test9() {
         ClienteHome clienteHome = new ClienteHome();
 
@@ -298,6 +346,12 @@ public class TestExamenRecuperacionStream {
             List<Cliente> list = clienteHome.findAll();
 
             //TODO STREAMS
+            List<String> listadoPais = list.stream()
+                            .map(cliente -> cliente.getPais())
+                                    .distinct()
+                                            .collect(toList());
+
+
 
             clienteHome.commitTransaction();
         } catch (RuntimeException e) {
@@ -320,6 +374,8 @@ public class TestExamenRecuperacionStream {
             List<Cliente> list = clienteHome.findAll();
 
             //TODO STREAMS
+            List<Pago> pagos = list.forEach(Cliente::getPago)
+                            .
 
             clienteHome.commitTransaction();
         } catch (RuntimeException e) {
